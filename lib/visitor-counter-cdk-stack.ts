@@ -1,16 +1,46 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Stack, StackProps, CfnOutput } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
-export class VisitorCounterCdkStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export class VisitorCounterCdkStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    // Create DynamoDB table
+    const table = new dynamodb.Table(this, "VisitorCounterTable", {
+      partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'VisitorCounterCdkQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    // Create Lambda function
+    const lambdaFunction = new lambda.Function(this, "VisitorCounterFunction", {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset("lambda"),
+      environment: {
+        TABLE_NAME: table.tableName,
+      },
+    });
+
+    // Grant the Lambda function read/write permissions to the DynamoDB table
+    table.grantReadWriteData(lambdaFunction);
+
+    // Create API Gateway
+    const api = new apigateway.RestApi(this, "VisitorCounterApi");
+
+    // Add a resource and POST method to the API
+    const visitorCount = api.root.addResource("visitorcount");
+    visitorCount.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(lambdaFunction),
+    );
+
+    // Output the API URL
+    new CfnOutput(this, "ApiUrl", {
+      value: api.url,
+      description: "API Gateway URL",
+    });
   }
 }
