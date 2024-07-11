@@ -44,10 +44,17 @@ jobs:
         aws iam get-user
         aws iam list-attached-user-policies --user-name $(aws sts get-caller-identity --query 'Arn' --output text | cut -d'/' -f2)
 
+    - name: Create CDK bootstrap bucket
+      run: |
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        BUCKET_NAME="cdk-hnb659fds-assets-${ACCOUNT_ID}-us-east-1"
+        aws s3 mb s3://${BUCKET_NAME} --region us-east-1
+        aws s3api put-bucket-versioning --bucket ${BUCKET_NAME} --versioning-configuration Status=Enabled
+    
     - name: Bootstrap CDK
       run: |
         echo "Attempting to bootstrap CDK..."
-        cdk bootstrap --verbose
+        cdk bootstrap --force --verbose
         if [ $? -ne 0 ]; then
           echo "Bootstrap failed. Checking AWS account info..."
           aws sts get-caller-identity
@@ -57,6 +64,10 @@ jobs:
     - name: Deploy to AWS
       run: |
         echo "Attempting to deploy..."
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        BUCKET_NAME="cdk-hnb659fds-assets-${ACCOUNT_ID}-us-east-1"
+        echo "Checking for bootstrap bucket: ${BUCKET_NAME}"
+        aws s3 ls s3://${BUCKET_NAME}
         cdk deploy --require-approval never --verbose
 
     - name: Debug on failure
