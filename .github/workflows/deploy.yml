@@ -40,11 +40,14 @@ jobs:
         aws sts get-caller-identity
         echo "Listing S3 buckets:"
         aws s3 ls
+        echo "Checking IAM permissions:"
+        aws iam get-user
+        aws iam list-attached-user-policies --user-name $(aws sts get-caller-identity --query 'Arn' --output text | cut -d'/' -f2)
 
     - name: Bootstrap CDK
       run: |
         echo "Attempting to bootstrap CDK..."
-        cdk bootstrap
+        cdk bootstrap --verbose
         if [ $? -ne 0 ]; then
           echo "Bootstrap failed. Checking AWS account info..."
           aws sts get-caller-identity
@@ -54,8 +57,8 @@ jobs:
     - name: Deploy to AWS
       run: |
         echo "Attempting to deploy..."
-        cdk deploy --require-approval never --debug
-      
+        cdk deploy --require-approval never --verbose
+
     - name: Debug on failure
       if: failure()
       run: |
@@ -63,3 +66,5 @@ jobs:
         aws sts get-caller-identity
         echo "Listing S3 buckets:"
         aws s3 ls
+        echo "Checking CloudFormation stacks:"
+        aws cloudformation list-stacks
