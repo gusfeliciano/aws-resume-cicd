@@ -40,13 +40,15 @@ export class VisitorCounterCdkStack extends Stack {
     const visitorCount = api.root.addResource("visitorcount");
     visitorCount.addMethod(
       "POST",
-      new apigateway.LambdaIntegration(lambdaFunction),
+      new apigateway.LambdaIntegration(lambdaFunction, {
+        proxy: true
+      })
     );
 
-    // Output the API URL
+    // Output the full API URL for the visitorcount resource
     new CfnOutput(this, "ApiUrl", {
-      value: api.url,
-      description: "API Gateway URL",
+      value: `${api.url}visitorcount`,
+      description: "API Gateway URL for visitorcount",
     });
   }
 }
