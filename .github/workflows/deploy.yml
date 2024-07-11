@@ -33,7 +33,14 @@ jobs:
         aws-region: us-east-1
 
     - name: Bootstrap CDK
-      run: cdk bootstrap aws://339712753836/us-east-1
+      run: |
+        echo "Attempting to bootstrap CDK..."
+        cdk bootstrap
+        if [ $? -ne 0 ]; then
+          echo "Bootstrap failed. Checking AWS account info..."
+          aws sts get-caller-identity
+          exit 1
+        fi
       
     - name: Deploy to AWS
       run: cdk deploy --require-approval never
