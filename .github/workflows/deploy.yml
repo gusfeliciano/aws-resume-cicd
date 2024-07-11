@@ -32,6 +32,15 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
+    - name: Debug AWS Configuration
+      run: |
+        echo "AWS CLI version:"
+        aws --version
+        echo "Checking AWS identity:"
+        aws sts get-caller-identity
+        echo "Listing S3 buckets:"
+        aws s3 ls
+
     - name: Bootstrap CDK
       run: |
         echo "Attempting to bootstrap CDK..."
@@ -41,6 +50,16 @@ jobs:
           aws sts get-caller-identity
           exit 1
         fi
-      
+
     - name: Deploy to AWS
-      run: cdk deploy --require-approval never
+      run: |
+        echo "Attempting to deploy..."
+        cdk deploy --require-approval never --debug
+      
+    - name: Debug on failure
+      if: failure()
+      run: |
+        echo "Deployment failed. Checking AWS account info..."
+        aws sts get-caller-identity
+        echo "Listing S3 buckets:"
+        aws s3 ls
