@@ -28,7 +28,13 @@ export class VisitorCounterCdkStack extends Stack {
     table.grantReadWriteData(lambdaFunction);
 
     // Create API Gateway
-    const api = new apigateway.RestApi(this, "VisitorCounterApi");
+    const api = new apigateway.RestApi(this, 'VisitorCounterApi', {
+      defaultCorsPreflightOptions: {
+        allowOrigins: ['https://heyitsgus.com'],
+        allowMethods: ['OPTIONS', 'POST'],
+        allowHeaders: ['Content-Type'],
+      }
+    });
 
     // Add a resource and POST method to the API
     const visitorCount = api.root.addResource("visitorcount");
