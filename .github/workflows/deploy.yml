@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Deploy Backend to AWS
 
 on:
   push:
@@ -26,56 +26,26 @@ jobs:
       run: npm install -g aws-cdk
       
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Debug AWS Configuration
-      run: |
-        echo "AWS CLI version:"
-        aws --version
-        echo "Checking AWS identity:"
-        aws sts get-caller-identity
-        echo "Listing S3 buckets:"
-        aws s3 ls
-        echo "Checking IAM permissions:"
-        aws iam get-user
-        aws iam list-attached-user-policies --user-name $(aws sts get-caller-identity --query 'Arn' --output text | cut -d'/' -f2)
-
-    - name: Create CDK bootstrap bucket
-      run: |
-        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        BUCKET_NAME="cdk-hnb659fds-assets-${ACCOUNT_ID}-us-east-1"
-        aws s3 mb s3://${BUCKET_NAME} --region us-east-1
-        aws s3api put-bucket-versioning --bucket ${BUCKET_NAME} --versioning-configuration Status=Enabled
-    
-    - name: Bootstrap CDK
-      run: |
-        echo "Attempting to bootstrap CDK..."
-        cdk bootstrap --force --verbose
-        if [ $? -ne 0 ]; then
-          echo "Bootstrap failed. Checking AWS account info..."
-          aws sts get-caller-identity
-          exit 1
-        fi
-
     - name: Deploy to AWS
       run: |
-        echo "Attempting to deploy..."
-        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-        BUCKET_NAME="cdk-hnb659fds-assets-${ACCOUNT_ID}-us-east-1"
-        echo "Checking for bootstrap bucket: ${BUCKET_NAME}"
-        aws s3 ls s3://${BUCKET_NAME}
-        cdk deploy --require-approval never --verbose
+        cdk deploy --require-approval never --outputs-file cdk-outputs.json
+
+    - name: Store CDK Outputs
+      uses: actions/upload-artifact@v3
+      with:
+        name: cdk-outputs
+        path: cdk-outputs.json
 
     - name: Debug on failure
       if: failure()
       run: |
         echo "Deployment failed. Checking AWS account info..."
         aws sts get-caller-identity
-        echo "Listing S3 buckets:"
-        aws s3 ls
-        echo "Checking CloudFormation stacks:"
-        aws cloudformation list-stacks
+        echo "Listing CloudFormation stacks:"
+        aws cloudformation list-stacks --query "StackSummaries[?StackStatus!='DELETE_COMPLETE']"
