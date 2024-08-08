@@ -139,6 +139,8 @@ Gus Feliciano - gus.feliciano@outlook.com
 
 Project Link: [https://github.com/gusfeliciano/visitor-counter-backend](https://github.com/gusfeliciano/visitor-counter-backend)
 
+Resume Website: [https://heyitsgus.com](https://heyitsgus.com)
+
 ---
 
 This project is part of the [Cloud Resume Challenge](https://cloudresumechallenge.dev/), an excellent way to showcase cloud skills and learn new technologies.
