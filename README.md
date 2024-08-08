@@ -2,6 +2,12 @@
 
 This repository contains the backend infrastructure and CI/CD pipeline for my implementation of the Cloud Resume Challenge. It uses AWS CDK to define the cloud resources and GitHub Actions for continuous integration and deployment.
 
+## AWS Architecture Diagram and Live Demo
+
+Live Demo Website: [https://heyitsgus.com](https://heyitsgus.com)
+
+![AWS Diagram](assets/images/aws-cloud-resume-diagram.png)
+
 ## Project Structure
 
 ```
